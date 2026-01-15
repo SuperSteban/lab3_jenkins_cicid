@@ -13,10 +13,7 @@ ADD . /opt
 RUN npm install
 
 # Exponer el puerto 3000 (puerto interno del contenedor React)
-EXPOSE 3000
-
-# Variable de entorno para el puerto
-ENV REACT_APP_PORT=${REACT_APP_PORT}
+EXPOSE 3001
 
 # Iniciar la aplicación
 ENTRYPOINT npm run start
