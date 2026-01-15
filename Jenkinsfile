@@ -1,6 +1,6 @@
 pipeline {
     // Cambiamos el label para que use el nodo principal de Linux
-    agent { label 'built-in' } 
+    agent { label 'debian-agent' } 
 
     environment {
         IMAGE_NAME = "react-app-lab"
