@@ -1,5 +1,5 @@
 
-FROM node:7.8.0
+FROM node:18-alpine
 
 # Argumento para el puerto de React (opcional)
 ARG REACT_APP_PORT=3000
