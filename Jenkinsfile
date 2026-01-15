@@ -1,37 +1,43 @@
 pipeline {
-    agent { label 'pc-windows' }
+    // Cambiamos el label para que use el nodo principal de Linux
+    agent { label 'built-in' } 
+
+    environment {
+        IMAGE_NAME = "react-app-lab"
+        CONTAINER_NAME = "react-container"
+    }
 
     stages {
         stage('Checkout') {
             steps {
+                // Clona el repo automáticamente
                 checkout scm
             }
         }
 
         stage('Run Tests') {
             steps {
-                echo 'Ejecutando tests desde el script...'
-                // Usamos 'sh' si usas Git Bash o 'bat' si es CMD
-                // Asumiendo que scripts/tests.sh es un script de shell:
-                sh "bash ./scripts/build.sh"
-                sh "bash ./scripts/test.sh"
+                echo 'Ejecutando tests...'
+                // Damos permisos de ejecución y corremos el script
+                sh "chmod +x ./scripts/build.sh"
+                sh "./scripts/build.sh"
+                sh "chmod +x ./scripts/tests.sh"
+                sh "./scripts/tests.sh"
             }
         }
 
         stage('Build & Deploy (Docker)') {
             steps {
                 script {
-                    echo "Construyendo imagen: ${IMAGE_NAME}..."
-                    // Construye la imagen usando el Dockerfile de tu raíz
-                    sh "docker build -t ${IMAGE_NAME} ."
+                    echo "Construyendo imagen: ${env.IMAGE_NAME}..."
+                    sh "docker build -t ${env.IMAGE_NAME} ."
 
-                    echo "Limpiando contenedores antiguos..."
-                    // Detiene y elimina el contenedor si ya existe para evitar errores de puerto ocupado
-                    sh "docker rm -f ${CONTAINER_NAME} || true"
+                    echo "Limpiando contenedor anterior si existe..."
+                    // En Linux, '|| true' evita que el pipeline falle si no hay contenedor
+                    sh "docker rm -f ${env.CONTAINER_NAME} || true"
 
-                    echo "Lanzando contenedor en puerto 3001..."
-                    // Corre el contenedor en segundo plano (-d)
-                    sh "docker run -d -p 3001:3001 --name ${CONTAINER_NAME} ${IMAGE_NAME}"
+                    echo "Iniciando contenedor en puerto 3000..."
+                    sh "docker run -d -p 3000:3000 --name ${env.CONTAINER_NAME} ${env.IMAGE_NAME}"
                 }
             }
         }
@@ -39,7 +45,10 @@ pipeline {
 
     post {
         always {
-            echo 'Limpiando espacio de trabajo...'
+            echo 'Finalizando proceso...'
+        }
+        success {
+            echo "Despliegue exitoso en el nodo principal."
         }
     }
 }
