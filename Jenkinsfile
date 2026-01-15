@@ -15,8 +15,8 @@ pipeline {
         stage('Run Tests Inside Container') {
             steps {
                 echo 'Ejecutando tests...'
-                sh "chmod +x ./scripts/tests.sh" 
-                sh "npm ./scripts/tests.sh" 
+                sh "chmod +x ./scripts/test.sh" 
+                sh "npm ./scripts/test.sh" 
 
 
             }
