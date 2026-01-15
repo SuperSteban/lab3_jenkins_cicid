@@ -1,5 +1,4 @@
 pipeline {
-    // Cambiamos el label para que use el nodo principal de Linux
     agent { label 'debian-agent' } 
 
     environment {
@@ -10,45 +9,50 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // Clona el repo automáticamente
                 checkout scm
             }
         }
 
-        stage('Run Tests') {
+        stage('Docker Build') {
             steps {
-                echo 'Ejecutando tests...'
-                // Damos permisos de ejecución y corremos el script
-                sh "chmod +x ./scripts/build.sh"
-                sh "./scripts/build.sh"
-                sh "chmod +x ./scripts/tests.sh"
-                sh "./scripts/tests.sh"
+                echo "Construyendo la imagen con todo el código..."
+                // Construimos la imagen. El Dockerfile debe tener el COPY . .
+                sh "docker build -t ${env.IMAGE_NAME} ."
             }
         }
 
-        stage('Build & Deploy (Docker)') {
+        stage('Run Tests Inside Container') {
+            steps {
+                echo 'Ejecutando tests dentro de la imagen construida...'
+                // Corremos un contenedor temporal para ejecutar el script de tests
+                // --rm borra el contenedor al terminar el test
+                sh "docker run --rm ${env.IMAGE_NAME} npm test -- --watchAll=false"
+            }
+        }
+
+        stage('Deploy') {
             steps {
                 script {
-                    echo "Construyendo imagen: ${env.IMAGE_NAME}..."
-                    sh "docker build -t ${env.IMAGE_NAME} ."
-
-                    echo "Limpiando contenedor anterior si existe..."
-                    // En Linux, '|| true' evita que el pipeline falle si no hay contenedor
+                    echo "Tests aprobados. Procediendo al despliegue..."
+                    
+                    echo "Limpiando contenedor anterior..."
                     sh "docker rm -f ${env.CONTAINER_NAME} || true"
 
-                    echo "Iniciando contenedor en puerto 3000..."
+                    echo "Levantando contenedor final en puerto 3000..."
                     sh "docker run -d -p 3000:3000 --name ${env.CONTAINER_NAME} ${env.IMAGE_NAME}"
+                    
+                    echo "-----------------------------------------------------------"
+                    echo "¡DESPLIEGUE REALIZADO EXITOSAMENTE!"
+                    echo "Accede en: http://localhost:3000 (o la IP de tu servidor)"
+                    echo "-----------------------------------------------------------"
                 }
             }
         }
     }
 
     post {
-        always {
-            echo 'Finalizando proceso...'
-        }
-        success {
-            echo "Despliegue exitoso en el nodo principal."
+        failure {
+            echo "El pipeline falló. Posiblemente los tests no pasaron."
         }
     }
 }
