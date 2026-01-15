@@ -13,6 +13,7 @@ pipeline {
                 echo 'Ejecutando tests desde el script...'
                 // Usamos 'sh' si usas Git Bash o 'bat' si es CMD
                 // Asumiendo que scripts/tests.sh es un script de shell:
+                sh "bash ./scripts/build.sh"
                 sh "bash ./scripts/test.sh"
             }
         }
