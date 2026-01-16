@@ -13,7 +13,7 @@ ADD . /opt
 RUN npm install
 
 # Exponer el puerto 3000 (puerto interno del contenedor React)
-EXPOSE 3001
+EXPOSE 3000
 
 # Iniciar la aplicación
-ENTRYPOINT npm run start
+CMD ["npm", "start"]
