@@ -1,5 +1,10 @@
 pipeline {
-    agent { label 'pc-windows' }
+    agent { label 'debian-agent' } 
+
+    environment {
+        IMAGE_NAME = "react-app-lab"
+        CONTAINER_NAME = "react-container"
+    }
 
     stages {
         stage('Checkout') {
@@ -7,38 +12,41 @@ pipeline {
                 checkout scm
             }
         }
-
-        stage('Run Tests') {
+        stage('Run Tests Inside Container') {
             steps {
-                echo 'Ejecutando tests desde el script...'
-                // Usamos 'sh' si usas Git Bash o 'bat' si es CMD
-                // Asumiendo que scripts/tests.sh es un script de shell:
-                sh "bash ./scripts/tests.sh"
+                echo 'Ejecutando tests...'
+                sh "chmod +x ./scripts/build.sh" 
+                sh "./scripts/build.sh" 
+                sh "chmod +x ./scripts/test.sh" 
+                sh "./scripts/test.sh" 
+
+
             }
         }
+        
 
-        stage('Build & Deploy (Docker)') {
+        stage('Deploy') {
             steps {
                 script {
-                    echo "Construyendo imagen: ${IMAGE_NAME}..."
-                    // Construye la imagen usando el Dockerfile de tu raíz
-                    sh "docker build -t ${IMAGE_NAME} ."
-
-                    echo "Limpiando contenedores antiguos..."
-                    // Detiene y elimina el contenedor si ya existe para evitar errores de puerto ocupado
-                    sh "docker rm -f ${CONTAINER_NAME} || true"
-
-                    echo "Lanzando contenedor en puerto 3000..."
-                    // Corre el contenedor en segundo plano (-d)
-                    sh "docker run -d -p 3000:3000 --name ${CONTAINER_NAME} ${IMAGE_NAME}"
+                    echo "Tests aprobados. Procediendo al despliegue..."
+                    echo "Construyendo la imagen con todo el código..."
+                    sh "docker build -t ${env.IMAGE_NAME} ."
+                    echo "Limpiando contenedor anterior..."
+                    sh "docker rm -f ${env.CONTAINER_NAME} || true"
+                    echo "Levantando contenedor final en puerto 3000..."
+                    sh "docker run -d -p 3001:3000 --name ${env.CONTAINER_NAME} ${env.IMAGE_NAME}"                
+                    echo "-----------------------------------------------------------"
+                    echo "¡DESPLIEGUE REALIZADO EXITOSAMENTE!"
+                    echo "Accede en: http://localhost:3001 (o la IP de tu servidor)"
+                    echo "-----------------------------------------------------------"
                 }
             }
         }
     }
 
     post {
-        always {
-            echo 'Limpiando espacio de trabajo...'
+        failure {
+            echo "El pipeline falló. Posiblemente los tests no pasaron."
         }
     }
 }
