@@ -34,10 +34,10 @@ pipeline {
                     echo "Limpiando contenedor anterior..."
                     sh "docker rm -f ${env.CONTAINER_NAME} || true"
                     echo "Levantando contenedor final en puerto 3000..."
-                    sh "docker run -d -p 3001:3000 --name ${env.CONTAINER_NAME} ${env.IMAGE_NAME}"                
+                    sh "docker run -d -p 3000:3000 --name ${env.CONTAINER_NAME} ${env.IMAGE_NAME}"                
                     echo "-----------------------------------------------------------"
                     echo "¡DESPLIEGUE REALIZADO EXITOSAMENTE!"
-                    echo "Accede en: http://localhost:3001 (o la IP de tu servidor)"
+                    echo "Accede en: http://localhost:3000 (o la IP de tu servidor)"
                     echo "-----------------------------------------------------------"
                 }
             }
